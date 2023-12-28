@@ -19,10 +19,10 @@ const uploadOnCloudinary = async (file, folder = "images") => {
             resource_type: "auto",
             folder: folder
         });
-        if (!(file instanceof String)) fs.unlinkSync(file);
+        if ((file instanceof String)) fs.unlinkSync(file);
         return instance;
     } catch (error) {
-        if (!(file instanceof String)) fs.unlinkSync(file);
+        if ((file instanceof String)) fs.unlinkSync(file);
         return null;
     }
 };
