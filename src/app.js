@@ -28,10 +28,8 @@ VERSION_ROUTER.use("/v1", V1_ROUTES);
 // Routes Declaration
 app.use("/api", VERSION_ROUTER);
 
-app.use("*", (req, res) => {
-    asyncHandler(async (req, res) => {
-        throw new ApiError(404, "Invalid Url or Method");
-    })
-})
+app.use("*", asyncHandler(async (req, res) => {
+    throw new ApiError(404, "Invalid Url or Method");
+}))
 
 export { app };
