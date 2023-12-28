@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 let UserController = {};
 
 async function getUser(username) {
-    return await User.aggregate([
+    const user = await User.aggregate([
         {
             $match: {
                 username: username,
@@ -70,8 +70,13 @@ async function getUser(username) {
                 ],
                 as: "orderHistory",
             },
+        },
+        {
+            $addFields: { password: undefined }
         }
     ])
+    if (user && (user instanceof Array) && user.length > 0) return user[0]
+    return null
 }
 
 
@@ -89,7 +94,7 @@ UserController.registerUser = asyncHandler(async (req, res) => {
 
     if (existingUser) throw new ApiError(400, "User already exists");
 
-    const avatarLocalPath = req.file?.avatar;
+    const avatarLocalPath = req.file.buffer;
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is required");
     }
@@ -120,7 +125,7 @@ UserController.loginUser = asyncHandler(async (req, res) => {
 
     const { username, password } = req.body
 
-    const user = await User.findOne({ username })
+    const user = await User.findOne({ username }).select("-password");
     if (!user) throw new ApiError(400, "Invalid username or password")
     const valid = await user.check_password(password)
     if (!valid) throw new ApiError(400, "Invalid username or password")
@@ -131,7 +136,7 @@ UserController.loginUser = asyncHandler(async (req, res) => {
     res.cookie("accessToken", accessToken, { expires: new Date(Date.now() + ms(CONFIG.ACCESS_TOKEN_EXPIRY)), httpOnly: true, secure: true })
     res.cookie("refreshToken", refreshToken, { expires: new Date(Date.now() + ms(CONFIG.REFRESH_TOKEN_EXPIRY)), httpOnly: true, secure: true })
 
-    res.status(200).json(new ApiResponse({ accessToken, refreshToken, profile: (await getUser(user.username))[0] }, "Login Successful"))
+    res.status(200).json(new ApiResponse({ accessToken, refreshToken, profile: (await getUser(user.username)) }, "Login Successful"))
 })
 
 UserController.refreshToken = asyncHandler(async (req, res) => {
@@ -165,11 +170,12 @@ UserController.getUserData = asyncHandler(async (req, res) => {
     const user = req.user
     try {
         const userData = await getUser(req.user.username)
-        if (!(userData && (userData instanceof Array) && userData.length > 0)) throw new ApiError(404, "User not found")
+        if (!userData) throw new ApiError(404, "User not found")
 
-        res.status(200).json(new ApiResponse(userData[0], "UserData fetched successfully"))
+        res.status(200).json(new ApiResponse(userData, "UserData fetched successfully"))
     } catch (error) {
         console.log(error);
+        if (error instanceof ApiError) throw error
         throw new ApiError(500, error.message)
     }
 })

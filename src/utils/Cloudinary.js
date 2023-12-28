@@ -12,16 +12,17 @@ const cloudinary_config = {
 
 cloudinary.config(cloudinary_config);
 
-const uploadOnCloudinary = async (filePath) => {
+const uploadOnCloudinary = async (file, folder = "images") => {
     try {
-        if (!filePath) return null;
-        const instance = await cloudinary.uploader.upload(filePath, {
+        if (!file) return null;
+        const instance = await cloudinary.uploader.upload(file, {
             resource_type: "auto",
+            folder: folder
         });
-        fs.unlinkSync(filePath);
+        if (!(file instanceof string)) fs.unlinkSync(file);
         return instance;
     } catch (error) {
-        fs.unlinkSync(filePath);
+        if (!(file instanceof string)) fs.unlinkSync(file);
         return null;
     }
 };
