@@ -16,17 +16,26 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
 
         //TODO: validate auth token
 
-        const decoded = JWT.verify(accessToken, CONFIG.ACCESS_TOKEN_SECRET, {}, (err, decoded) => {
-            if (!err) {
-                // Token is valid
-                if (decoded.exp * 1000 < Date.now()) throw new ApiError(401, "Authentication token has expired")
-                return decoded
+        const decoded = JWT.verify(
+            accessToken,
+            CONFIG.ACCESS_TOKEN_SECRET,
+            {},
+            (err, decoded) => {
+                if (!err) {
+                    // Token is valid
+                    if (decoded.exp * 1000 < Date.now())
+                        throw new ApiError(
+                            401,
+                            "Authentication token has expired"
+                        );
+                    return decoded;
+                }
             }
-        })
-        req.user = await User.findById(decoded._id)
-        next()
+        );
+        req.user = await User.findById(decoded._id);
+        next();
     } catch (err) {
-        res.clearCookie("accessToken")
+        res.clearCookie("accessToken");
         if (err instanceof ApiError) throw err;
         throw new ApiError(401, "Invalid Authentication Token");
     }

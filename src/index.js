@@ -6,11 +6,11 @@ connectDB()
     .then(() => {
         app.on("error", (error) => {
             console.log(error);
-            console.log("App is not connected!!")
+            console.log("App is not connected!!");
         });
         app.listen(CONFIG.PORT, () => {
             console.log("App is listening on port " + CONFIG.PORT);
-        })
+        });
     })
     .catch((err) => {
         console.log(err);

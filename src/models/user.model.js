@@ -39,8 +39,8 @@ const userSchema = new mongoose.Schema(
                 coordinates: {
                     type: {
                         lat: { type: Number, required: true },
-                        lng: { type: Number, required: true }
-                    }
+                        lng: { type: Number, required: true },
+                    },
                 },
                 postalCode: { type: Number, required: true },
                 state: { type: String, required: true },
@@ -67,10 +67,12 @@ const userSchema = new mongoose.Schema(
             default: true,
         },
         orderHistory: {
-            type: [{
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Order"
-            }],
+            type: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Order",
+                },
+            ],
         },
     },
     {
@@ -79,7 +81,7 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function (next) {
-    if (this.isModified("password_hash")) {
+    if (this.isModified("password")) {
         this.password = await bcrypt.hash(this.password, 10);
     }
     next();
@@ -88,10 +90,10 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.check_password = async function (password) {
     return await bcrypt.compare(password, this.password);
 };
-userSchema.methods.set_password = async function (password) {
+userSchema.methods.update_password = async function (password) {
     this.password = password;
     await this.save();
-    return this
+    return this;
 };
 
 userSchema.methods.generateAccessToken = function () {
