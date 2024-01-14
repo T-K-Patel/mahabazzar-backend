@@ -2,10 +2,12 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/Cloudinary.js";
-import { User } from "../models/user.model.js";
+import { User } from "../models/index.js";
+// import User from "../models/user.model.js";
 import ms from "ms";
 import CONFIG from "../app.config.js";
 import jwt from "jsonwebtoken";
+import uploadFileToFirebase from "../utils/Firebase.js";
 let UserController = {};
 
 async function getUser(username) {
@@ -105,13 +107,16 @@ UserController.registerUser = asyncHandler(async (req, res) => {
 
     if (existingUser) throw new ApiError(400, "User already exists");
 
-    const avatarLocalPath = req.file?.buffer;
-    if (!avatarLocalPath) {
+    const avatarFileBuffer = req.file?.buffer;
+    const fileExtension = req.file?.originalname?.split('.').pop();
+    const mimeType = req.file?.mimetype;
+
+    if (!avatarFileBuffer) {
         throw new ApiError(400, "Avatar is required");
     }
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath, "users/avatar");
-    if (!avatar) throw new ApiError(400, "Can't upload Avatar");
+    const avatarUrl = await uploadFileToFirebase(avatarFileBuffer, "users/avatar", fileExtension ?? null, mimeType);
+    if (!avatarUrl) throw new ApiError(400, "Can't upload Avatar");
 
     const user = await User.create({
         username,
@@ -119,7 +124,7 @@ UserController.registerUser = asyncHandler(async (req, res) => {
         password,
         firstname,
         lastname,
-        avatar: avatar.url,
+        avatar: avatarUrl,
     });
 
     const createdUser = await User.findOne(user._id).select(

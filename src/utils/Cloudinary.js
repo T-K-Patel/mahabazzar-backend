@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
-import { v4 as uuid } from "uuid"
+import { v4 as uuid } from "uuid";
 import CONFIG from "../app.config.js";
 
 const cloudinary_config = {
@@ -15,9 +15,12 @@ const uploadOnCloudinary = async (byteArrayBuffer, folder = "images") => {
         if (!byteArrayBuffer) return null;
         const instance = await new Promise((resolve) => {
             cloudinary.uploader
-                .upload_stream({ folder, public_id: uuid() }, (error, uploadResult) => {
-                    return resolve(uploadResult);
-                })
+                .upload_stream(
+                    { folder, public_id: uuid() },
+                    (error, uploadResult) => {
+                        return resolve(uploadResult);
+                    }
+                )
                 .end(byteArrayBuffer);
         });
         return instance;

@@ -1,9 +1,10 @@
 import dotenv from "dotenv";
+
 dotenv.config({
     path: "./.env",
 });
 
-let CONFIG = { ...process.env };
+const CONFIG = { ...process.env };
 
 CONFIG.PORT = CONFIG.PORT || 8000;
 CONFIG.DB_NAME = "projekt-x-db";
