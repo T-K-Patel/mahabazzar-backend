@@ -4,15 +4,16 @@ import morgan from "morgan";
 
 // Routes import
 import V1_ROUTES from "./routes/v1.routes.js";
+import CONFIG from "./app.config.js";
 
 const app = express();
 
-// app.use(
-//     cors({
-//         origin: CONFIG.CORS_ORIGIN,
-//         credentials: true,
-//     })
-// );
+app.use(
+    cors({
+        origin: CONFIG.CORS_ORIGIN,
+        credentials: true,
+    })
+);
 
 app.set("view engine", "ejs");
 app.use(express.json());
