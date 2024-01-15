@@ -1,7 +1,7 @@
-import express, { Router, cors } from "express";
+import express, { Router } from "express";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
-
+import cors from 'cors'
 // Routes import
 import V1_ROUTES from "./routes/v1.routes.js";
 import CONFIG from "./app.config.js";
