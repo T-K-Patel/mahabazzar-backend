@@ -1,4 +1,4 @@
-import express, { Router } from "express";
+import express, { Router, cors } from "express";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 
