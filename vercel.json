@@ -8,6 +8,9 @@
     ],
     "routes": [
         {
+            "handle": "filesystem"
+        },
+        {
             "src": "/api/v1/admin/inventory/(.*)",
             "dest": "src/index.js",
             "headers": {
