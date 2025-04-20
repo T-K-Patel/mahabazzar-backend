@@ -1,86 +1,89 @@
 import mongoose from "mongoose";
 
-const OrderItemSchema = mongoose.Schema(
-    {
-        product_id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Product",
-            required: true,
-        },
-        price: {
-            type: Number,
-            required: true,
-        },
-        quantity: {
-            type: Number,
-            required: true,
-            min: 1,
-            integer: true,
-        },
-        total: {
-            type: Number,
-            required: true,
-        },
-        status: {
-            type: String,
-            enum: [
-                "Pending",
-                "Order Received",
-                "Processing",
-                "In Transit",
-                "Out for Delivery",
-                "Delivered",
-            ],
-            default: "Pending",
-        },
-    },
-    {
-        timestamps: true,
-    }
-);
+const ORDER_STATUS_ENUM = {
+    PENDING: "P",
+    ACCEPTED: "A",
+    PROCESSING: "PR",
+    SHIPPED: "S",
+    OUT_FOR_DELIVERY: "OFD",
+    DELIVERED: "D",
+    CANCELED: "C",
+    REJECTED_DECLINED: "R",
+};
 
-export const OrderItems = mongoose.model("OrderItem", OrderItemSchema);
+const ORDER_STATUS = {
+    P: "Pending",
+    A: "Accepted",
+    PR: "Processing",
+    S: "Shipped",
+    OFD: "Out for Delivery",
+    D: "Delivered",
+    C: "Canceled",
+    R: "Rejected/Declined",
+};
 
-const OrderSchema = new mongoose.Schema(
+const orderSchema = new mongoose.Schema(
     {
         user_id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-        products: {
+        address: {
+            landmark: {
+                type: String,
+                required: true,
+            },
+            city: {
+                type: String,
+                required: true,
+            },
+            state: {
+                type: String,
+                required: true,
+            },
+            country: {
+                type: String,
+                required: true,
+            },
+            pincode: {
+                type: Number,
+                required: true,
+                match: /[0-9]{6}/,
+            },
+            phone: {
+                type: String,
+                required: true,
+            },
+            type: {
+                type: String,
+                enum: ["HOME", "WORK"],
+                default: "WORK",
+            },
+        },
+        // LATER: Add payment details
+        // payment: {
+        //     type: mongoose.Schema.Types.ObjectId,
+        //     ref: "Invoice",
+        //     required: true,
+        // },
+        items: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: "OrderItem",
-            validate: {
-                validator: function (products) {
-                    return products.length > 0;
-                },
-                message: "There must be at least one item in the order.",
-            },
-            required: true,
+            default: [],
+        },
+        statusCode: {
+            type: String,
+            enum: Object.keys(ORDER_STATUS),
+            default: "P",
         },
         totalPrice: {
             type: Number,
             required: true,
         },
-        discountedPrice: {
-            type: Number,
-        },
-        status: {
-            type: String,
-            enum: [
-                "Order Received",
-                "Processing",
-                "In Transit",
-                "Out for Delivery",
-                "Delivered",
-                "Canceled",
-            ],
-            default: "Order Received",
-        },
-        tax: { type: String },
-        expectedDelivery: {
+        delivery: {
             type: Date,
+            required: true,
         },
     },
     {
@@ -88,6 +91,14 @@ const OrderSchema = new mongoose.Schema(
     }
 );
 
-const Order = mongoose.model("Order", OrderSchema);
+orderSchema.virtual("orderStatus").get(function () {
+    return ORDER_STATUS[this.statusCode];
+});
 
+orderSchema.set("toObject", { virtuals: true });
+orderSchema.set("toJSON", { virtuals: true });
+
+const Order = mongoose.model("Order", orderSchema);
+
+export { ORDER_STATUS_ENUM };
 export default Order;

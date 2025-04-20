@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import CONFIG from "../app.config.js";
+import ENV_CONFIG from "../app.config.js";
 
 const userSchema = new mongoose.Schema(
     {
@@ -19,36 +19,25 @@ const userSchema = new mongoose.Schema(
             trim: true,
             required: true,
         },
+        mobile: {
+            type: Number,
+            integer: true,
+            trim: true,
+        },
         firstname: {
             type: String,
+            trim: true,
             required: true,
         },
         lastname: {
             type: String,
+            trim: true,
             required: true,
         },
         gender: {
             type: String,
-            enum: ["Male", "Female"],
-        },
-        address: {
-            type: {
-                address_line1: { type: String, required: true },
-                address_line2: String,
-                city: { type: String, required: true },
-                coordinates: {
-                    type: {
-                        lat: { type: Number, required: true },
-                        lng: { type: Number, required: true },
-                    },
-                },
-                postalCode: { type: Number, required: true },
-                state: { type: String, required: true },
-            },
-        },
-        avatar: {
-            type: String,
-            required: true,
+            enum: ["Male", "Female", "Prefer not to say"],
+            default: "Prefer not to say",
         },
         password: {
             type: String,
@@ -58,25 +47,29 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
-        isAdmin: {
-            type: Boolean,
-            default: false,
-        },
         isActive: {
             type: Boolean,
             default: true,
         },
-        orderHistory: {
-            type: [
-                {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "Order",
-                },
-            ],
-        },
     },
     {
         timestamps: true,
+        toObject: {
+            transform: function (doc, ret) {
+                delete ret.password;
+                delete ret.isActive;
+                delete ret.isVerified;
+                return ret;
+            }
+        },
+        toJSON: {
+            transform: function (doc, ret) {
+                delete ret.isActive;
+                delete ret.isVerified;
+                delete ret.password;
+                return ret;
+            }
+        }
     }
 );
 
@@ -101,10 +94,11 @@ userSchema.methods.generateAccessToken = function () {
         {
             _id: this._id,
             username: this.username,
+            isAdmin: this.isAdmin,
         },
-        CONFIG.ACCESS_TOKEN_SECRET,
+        ENV_CONFIG.ACCESS_TOKEN_SECRET,
         {
-            expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY,
+            expiresIn: ENV_CONFIG.ACCESS_TOKEN_EXPIRY,
         }
     );
 };
@@ -114,9 +108,9 @@ userSchema.methods.generateRefreshToken = function () {
         {
             _id: this._id,
         },
-        CONFIG.REFRESH_TOKEN_SECRET,
+        ENV_CONFIG.REFRESH_TOKEN_SECRET,
         {
-            expiresIn: CONFIG.REFRESH_TOKEN_EXPIRY,
+            expiresIn: ENV_CONFIG.REFRESH_TOKEN_EXPIRY,
         }
     );
 };

@@ -1,13 +1,5 @@
 import mongoose from "mongoose";
 
-const RatingsSchema = mongoose.Schema({
-    1: { type: Number, integer: true },
-    2: { type: Number, integer: true },
-    3: { type: Number, integer: true },
-    4: { type: Number, integer: true },
-    5: { type: Number, integer: true },
-});
-
 const ProductSchema = new mongoose.Schema(
     {
         title: {
@@ -23,23 +15,21 @@ const ProductSchema = new mongoose.Schema(
             required: true,
             min: 0,
         },
+        cost: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
         discountPercentage: {
             type: Number,
             min: 0,
             max: 100,
-        },
-        rating: {
-            type: RatingsSchema,
-            default: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            default: 0,
         },
         stock: {
             type: Number,
             required: true,
             integer: true,
-        },
-        brand: {
-            type: String,
-            required: true,
         },
         category: {
             type: String,
@@ -54,11 +44,6 @@ const ProductSchema = new mongoose.Schema(
                 type: String,
             },
         ],
-        owner: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
     },
     {
         timestamps: true,

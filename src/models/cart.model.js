@@ -1,7 +1,13 @@
 import mongoose from "mongoose";
+
 // TODO: review this model if there is requirement of cart. or just cartitem can do the work.
 const CartItemSchema = mongoose.Schema(
     {
+        cart_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Cart",
+            required: true,
+        },
         product_id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Product",
@@ -28,17 +34,10 @@ const CartSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
-        products: {
+        items: {
             type: [CartItemSchema],
-            validate: {
-                validator: function (products) {
-                    return products.length > 0;
-                },
-                message: "There must be at least one item in the order.",
-            },
             required: true,
         },
-        // TODO: add Cart flags if needed.
     },
     {
         timestamps: true,
@@ -47,6 +46,5 @@ const CartSchema = new mongoose.Schema(
 
 const Cart = mongoose.model("Cart", CartSchema);
 
-Cart.CartItem = CartItem;
-
+export { CartItem };
 export default Cart;

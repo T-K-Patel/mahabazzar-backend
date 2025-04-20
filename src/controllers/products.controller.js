@@ -1,54 +1,48 @@
-import Product from "../models/product.model.js";
-import User from "../models/user.model.js";
-import { ApiError } from "../utils/ApiError.js";
+import { Product } from "../models/index.js";
+import { ApiError } from "../Errors/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import asyncHandler from "../utils/asyncHandler.js";
+import { StatusCodes } from "http-status-codes";
 
 let ProductController = {};
 
-ProductController.addProduct = asyncHandler(async (req, res) => {
-    const {
-        title,
-        description,
-        price,
-        stock,
-        brand,
-        category,
-        thumbnail,
-        owner,
-    } = req.body;
-
-    if (
-        [
-            title,
-            description,
-            price,
-            stock,
-            brand,
-            category,
-            thumbnail,
-            owner,
-        ].some((value) => value == null)
-    )
-        throw new ApiError(400, "All fields are required.");
-
-    const Owner = await User.findOne({ username: owner });
-
-    const product = await Product.create({
-        title,
-        description,
-        price,
-        stock,
-        brand,
-        category,
-        thumbnail,
-        owner: Owner._id,
-        // owner: req.user._id,
-    });
-
-    res.status(200).json(
-        new ApiResponse(product, "Product Added Successfully.")
+ProductController.getAllProducts = async (req, res) => {
+    const products = await Product.aggregate([
+        {
+            $project: {
+                _id: 1,
+                title: 1,
+                description: 1,
+                discountPercentage: 1,
+                price: 1,
+                discountedPrice: {
+                    $multiply: [
+                        "$price",
+                        {
+                            $divide: [
+                                {
+                                    $subtract: [100, "$discountPercentage"],
+                                },
+                                100,
+                            ],
+                        },
+                    ],
+                },
+                stock: {
+                    $cond: {
+                        if: { $lte: ["$stock", 5] },
+                        then: "$stock",
+                        else: "$$REMOVE",
+                    },
+                },
+                category: 1,
+                thumbnail: 1,
+                image: 1,
+            },
+        },
+    ]);
+    res.status(StatusCodes.OK).json(
+        new ApiResponse(products, "Fetched all products successfully.")
     );
-});
+};
 
 export default ProductController;

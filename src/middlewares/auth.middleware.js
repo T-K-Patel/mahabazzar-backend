@@ -1,73 +1,27 @@
-import jwt from "jsonwebtoken";
-import User from "../models/user.model.js";
-import { ApiError } from "../utils/ApiError.js";
-import asyncHandler from "../utils/asyncHandler.js";
-import CONFIG from "../app.config.js";
+import { ApiError } from "../Errors/ApiError.js";
+import MetaData from "../models/metaData.model.js";
 
-// const authMiddleware = asyncHandler( async ( req, res, next ) => {
-//     try {
-//         const accessToken = req.cookies.accessToken || req.body.accessToken;
-//         if ( !accessToken ) {
-//             throw new ApiError(
-//                 401,
-//                 "Authentication credentials were not provided"
-//             );
-//         }
-//         const decoded = JWT.verify(
-//             accessToken,
-//             CONFIG.ACCESS_TOKEN_SECRET,
-//             {},
-//             ( err, decoded ) => {
-//                 if ( !err ) {
-//                     if ( decoded.exp * 1000 < Date.now() )
-//                         throw new ApiError(
-//                             401,
-//                             "Authentication token has expired"
-//                         );
-//                     return decoded;
-//                 }
-//             }
-//         );
-//         req.user = await User.findById( decoded._id );
-//         next();
-//     } catch ( err ) {
-//         res.clearCookie( "accessToken" );
-//         if ( err instanceof ApiError ) throw err;
-//         throw new ApiError( 401, "Invalid Authentication Token" );
-//     }
-// } );
-// export default authMiddleware;
+const authMiddleware = async (req, res, next) => {
+    if (req.session?.userId) {
+        next();
+    } else {
+        next(new ApiError(401, "Please login to continue."));
+    }
+};
 
-const authMiddleware = asyncHandler(async (req, res, next) => {
-    const authorization =
-        req.cookies.accessToken ||
-        req.headers.authorization?.replace("Bearer ", "");
-    if (!authorization) {
-        throw new ApiError(401, "No Authorization Header");
-    } else
-        try {
-            const token = authorization;
-            if (!token) {
-                throw new ApiError(401, "Invalid Token Format");
-            }
-            const decode = jwt.verify(token, CONFIG.ACCESS_TOKEN_SECRET);
-            req.user = await User.findById(decode._id);
-            next();
-        } catch (error) {
-            if (error instanceof ApiError) {
-                throw error;
-            }
-            if (error instanceof jwt.TokenExpiredError) {
-                throw new ApiError(401, "Session Expired", error.message);
-            }
+export const adminAuthMiddleware = async (req, res, next) => {
+    if (req.session?.userId && req.session?.isAdmin) {
+        const admin = await MetaData.findOne({ key: "admin" });
+        if (admin) {
             if (
-                error instanceof jwt.JsonWebTokenError ||
-                error instanceof TokenError
+                Array.isArray(admin.value) &&
+                admin.value.includes(req.session.userId)
             ) {
-                throw new ApiError(401, "Invalid Token", error.message);
+                return next();
             }
-            throw new ApiError(500, "Internal server Error", error.message);
         }
-});
+    }
+    next(new ApiError(401, "You are not authorised to access this route."));
+};
 
 export default authMiddleware;
